@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login — MVP Libros</title>
+  <link rel="stylesheet" href="/StockLocal/css/style.css" />
+</head>
+<body class="centered">
+  <div class="login-split fade-in">
+    <!-- Panel izquierdo -->
+    <section class="panel-left">
+      <header class="left-head">
+        <div class="logo-stack">📚</div>
+        <div>
+          <h1 class="app-title">MVP Libros</h1>
+          <p class="app-sub">Sistema de stock para colegios, rápido y simple.</p>
+        </div>
+      </header>
+
+      <div class="feature-list">
+        <div class="feature-pill"><span class="i">🔎</span> Búsqueda por título, autor y categoría</div>
+        <div class="feature-pill"><span class="i">✅</span> Altas, ediciones y bajas (lógicas)</div>
+        <div class="feature-pill"><span class="i">🛡️</span> Acceso protegido para administradores</div>
+      </div>
+
+      <p class="hint">Ingresá con tu usuario administrador para continuar.</p>
+    </section>
+
+    <!-- Panel derecho -->
+    <section class="panel-right slide-up">
+      <h2 class="right-title">Acceso administrador</h2>
+
+      <form id="formLogin" class="vstack">
+        <div class="input-with-icon">
+          <span class="input-icon">👤</span>
+          <input name="username" placeholder="admin" autocomplete="username" required />
+        </div>
+        <div class="input-with-icon">
+          <span class="input-icon">🔒</span>
+          <input id="pwd" name="password" placeholder="••••••" type="password" autocomplete="current-password" required />
+        </div>
+        <div id="caps" class="muted" style="display:none">⚠️ Bloq Mayús activado</div>
+        <button class="primary btn-pill">Ingresar</button>
+      </form>
+
+      <p class="muted foot-help">¿Problemas para entrar? Consultá al administrador del sistema.</p>
+
+      <div class="info-login">
+        <div><strong>Usuario asignado:</strong> <span class="badge" id="il-username">—</span></div>
+        <div><strong>Último acceso:</strong> <span id="il-last">—</span></div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { loginIfValid, guardIfLogged, getAssignedUser, getLastLogin } from './js/auth.js';
+    guardIfLogged('/dashboard.html');
+
+    // info
+    const assigned = getAssignedUser();
+    document.getElementById('il-username').textContent = assigned?.username || '—';
+    const last = getLastLogin();
+    document.getElementById('il-last').textContent = last ? new Date(last).toLocaleString('es-AR') : '—';
+
+    // caps
+    document.getElementById('pwd').addEventListener('keyup', (e)=>{
+      const on = e.getModifierState && e.getModifierState('CapsLock');
+      document.getElementById('caps').style.display = on ? 'block' : 'none';
+    });
+
+    // submit
+    document.getElementById('formLogin').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const ok = await loginIfValid(fd.get('username'), fd.get('password'));
+      if (ok) location.href = 'dashboard.html';
+      else alert('Usuario o contraseña inválidos.');
+    });
+  </script>
+</body>
+</html>

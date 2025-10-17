@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logs — Stock Local</title>
+  <link rel="stylesheet" href="/StockLocal/css/style.css" />
+</head>
+<body>
+  <nav class="topbar">
+    <div class="brand"><div class="logo">🧾</div> Auditoría de Cambios</div>
+    <div class="spacer"></div>
+    <a href="dashboard.html">📚 Libros</a>
+    <a href="logs.html" class="active">🧾 Logs</a>
+    <button id="btnLogout" class="outline">↪ Cerrar Sesión</button>
+  </nav>
+
+  <main class="container">
+    <section class="card fade-in">
+      <div class="row" style="align-items:center; justify-content:space-between; margin-bottom:8px">
+        <h2 class="section-title" style="margin:0">🧾 Registros</h2>
+        <div class="searchbar" style="min-width:340px">
+          <span class="icon">🔎</span>
+          <input id="qLogs" placeholder="Buscar por acción, entidad, ID, usuario, campo o valor…" />
+        </div>
+      </div>
+
+      <table class="mt8">
+        <thead>
+          <tr>
+            <th>🕒 Fecha</th><th>⚡ Acción</th><th>📦 Entidad</th><th>🆔 ID</th><th>👤 Usuario</th><th>🧩 Elemento</th><th>⬅ Antes</th><th>➡ Ahora</th>
+          </tr>
+        </thead>
+        <tbody id="tblLogs"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module">
+    import { requireAuth, onLogout } from './js/auth.js';
+    import { getLogsFlat } from './js/logs.js';
+    requireAuth();
+    document.getElementById('btnLogout').addEventListener('click', onLogout);
+
+    const input = document.getElementById('qLogs');
+    const tbody = document.getElementById('tblLogs');
+
+    const actPill = (a)=>{
+      if (a==='CREATE') return `<span class="pill act-create">Creado</span>`;
+      if (a==='DELETE') return `<span class="pill act-delete">Eliminado</span>`;
+      return `<span class="pill act-update">Editado</span>`;
+    };
+
+    function render() {
+      const q = input.value.trim().toLowerCase();
+      const rows = getLogsFlat()
+        .filter(r => {
+          const s = [r.action,r.entity,r.entityId,r.user,r.field,String(r.from??''),String(r.to??'')].join(' ').toLowerCase();
+          return !q || s.includes(q);
+        })
+        .sort((a,b)=> b.ts - a.ts)
+        .map(r => `
+          <tr>
+            <td class="muted">${new Date(r.ts).toLocaleString('es-AR')}</td>
+            <td>${actPill(r.action)}</td>
+            <td>${r.entity}</td>
+            <td>${r.entityId}</td>
+            <td>${r.user||''}</td>
+            <td><code>${r.field||'—'}</code></td>
+            <td><em>${String(r.from??'')}</em></td>
+            <td><strong>${String(r.to??'')}</strong></td>
+          </tr>
+        `).join('');
+
+      tbody.innerHTML = rows || '<tr><td colspan="8" class="muted">Sin registros.</td></tr>';
+    }
+
+    input.addEventListener('input', render);
+    window.addEventListener('storage', (e) => { if (e.key === 'audit.v2') render(); });
+    render();
+  </script>
+</body>
+</html>
